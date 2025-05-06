@@ -1,108 +1,84 @@
-# encoding: utf-8
-require "logstash/filters/base"
-require "logstash/namespace"
-
-# A general search and replace tool which queries replacement values from a redis instance.
-#
-# This is actually a redis version of a translate plugin. <https://www.elastic.co/guide/en/logstash/current/plugins-filters-translate.html>
-#
-# Operationally, if the event field specified in the "field" configuration
-# matches the EXACT contents of a redis key, the field's value will be substituted
-# with the matched key's value from the redis GET <key> command.
-#
-# By default, the redis filter will replace the contents of the 
-# matching event field (in-place). However, by using the "destination"
-# configuration item, you may also specify a target event field to
-# populate with the new translated value.
-# 
-# Alternatively, for simple string search and replacements for just a few values
-# you might consider using the gsub function of the mutate filter.
-
+# A custom Logstash filter plugin to enrich events using data fetched from Redis.
 class LogStash::Filters::Redis < LogStash::Filters::Base
-
   config_name "redis"
 
-  # The hostname of your Redis server.
+  # Redis connection settings
   config :host, :validate => :string, :default => "127.0.0.1"
-
-  # The port to connect on.
   config :port, :validate => :number, :default => 6379
-
-  # Password to authenticate with. There is no authentication by default.
   config :password, :validate => :password
-
-  # The Redis database number.
   config :db, :validate => :number, :default => 0
-  
-  # The name of the logstash event field containing the value to be compared for a
-  # match by the translate filter (e.g. "message", "host", "response_code"). 
-  # 
-  # If this field is an array, only the first value will be used.
-  config :field, :validate => :string, :required => true
 
-  # If the destination (or target) field already exists, this configuration item specifies
-  # whether the filter should skip translation (default) or overwrite the target field
-  # value with the new translation value.
-  config :override, :validate => :boolean, :default => false
-
-  # The destination field you wish to populate with the translated code. The default
-  # is a field named "redis". Set this to the same value as source if you want
-  # to do a substitution, in this case filter will allways succeed. This will clobber
-  # the old value of the source field! 
-  config :destination, :validate => :string, :default => "redis"
-
-  # In case no translation occurs in the event (no matches), this will add a default
-  # translation string, which will always populate "field", if the match failed.
-  #
-  # For example, if we have configured `fallback => "no match"`, using this dictionary:
-  #
-  #     foo: bar
-  #
-  # Then, if logstash received an event with the field `foo` set to "bar", the destination
-  # field would be set to "bar". However, if logstash received an event with `foo` set to "nope",
-  # then the destination field would still be populated, but with the value of "no match".
-  config :fallback, :validate => :string
-
-  # Connection timeout
-  config :timeout, :validate => :number, :required => false, :default => 5
+  # Event processing options
+  config :field, :validate => :string, :required => true       # Field whose value will be used as the Redis key
+  config :override, :validate => :boolean, :default => false   # Whether to overwrite the destination field if it already exists
+  config :destination, :validate => :string, :default => "redis" # Where to store the retrieved value in the event
+  config :fallback, :validate => :string                        # Value to set if lookup fails or key doesn't exist
+  config :timeout, :validate => :number, :required => false, :default => 5 # Redis connection timeout
 
   public
   def register
     require 'redis'
     require 'json'
     @redis = nil
-  end # def register
+  end
 
   public
   def filter(event)
+    # Skip processing if the target field is missing or if destination exists and override is false
     return unless event.include?(@field)
-    return if event.include?(@destination) and not @override
+    return if event.include?(@destination) && !@override
 
+    # Resolve source key from event (handle both string and array values)
     source = event.get(@field).is_a?(Array) ? event.get(@field).first.to_s : event.get(@field).to_s
-    @redis ||= connect
-    val = @redis.get(source)
-    if val
-      begin
-        event.set(@destination, JSON.parse(val))
-      rescue JSON::ParserError => e
-        event.set(@destination, val)
+
+    begin
+      @redis ||= connect
+      type = @redis.type(source)
+
+      case type
+      when "string"
+        value = @redis.get(source)
+        event.set(@destination, value) if value
+
+      when "hash"
+        hash = @redis.hgetall(source)
+        hash.each { |k, v| event.set("#{@destination}[#{k}]", v) } unless hash.empty?
+
+      when "list"
+        list = @redis.lrange(source, 0, -1)
+        event.set(@destination, list) unless list.empty?
+
+      when "set"
+        set = @redis.smembers(source)
+        event.set(@destination, set) unless set.empty?
+
+      when "zset"
+        zset = @redis.zrange(source, 0, -1, with_scores: true)
+        event.set(@destination, zset) unless zset.empty?
+
+      else
+        # Unsupported or nonexistent key type, use fallback if available
+        event.set(@destination, @fallback) if @fallback
       end
-    elsif @fallback
-      event.set(@destination, @fallback)
+
+    rescue => e
+      # On error (connection, lookup, etc.), log and optionally set fallback
+      @logger.warn("Redis lookup failed", :error => e.message)
+      event.set(@destination, @fallback) if @fallback
     end
-      
-    # filter_matched should go in the last line of our successful code
+
     filter_matched(event)
-  end # def filter
+  end
 
   private
+  # Establish a new Redis connection using configured options
   def connect
-     Redis.new(
-       :host => @host,
-       :port => @port, 
-       :timeout => @timeout,
-       :db => @db,
-       :password => @password.nil? ? nil : @password.value
-     )
-  end #def connect
-end # class LogStash::Filters::Redis
+    Redis.new(
+      host: @host,
+      port: @port,
+      timeout: @timeout,
+      db: @db,
+      password: @password.nil? ? nil : @password.value
+    )
+  end
+end

@@ -1,8 +1,41 @@
-# Logstash Plugin
+# Logstash Filter Plugin: Redis Lookup
 
-This is a plugin for [Logstash](https://github.com/elastic/logstash).
+This is a custom [Logstash](https://github.com/elastic/logstash) filter plugin that enriches event data by querying a Redis datastore. The plugin retrieves values from Redis using a field in the event as the lookup key and supports various Redis data types (`string`, `hash`, `list`, `set`, `zset`).
 
-It is fully free and fully open source. The license is Apache 2.0, meaning you are pretty much free to use it however you want in whatever way.
+It is fully free and open source under the Apache 2.0 License.
+
+## 🔧 Features
+
+- Look up values from Redis based on a specified event field.
+- Supports Redis types: `string`, `hash`, `list`, `set`, and `zset`.
+- Optional fallback value if the key is not found or Redis is unreachable.
+- Configurable key source field, destination field, and override behavior.
+
+## 📄 Configuration Example
+
+```logstash
+filter {
+  redis {
+    host => "localhost"
+    port => 6379
+    db => 0
+    field => "user_id"
+    destination => "user_data"
+    override => true
+    fallback => "unknown"
+  }
+}
+````
+
+## 🧠 How It Works
+
+Given an event field (e.g., `user_id`), the plugin queries Redis for a key matching the field’s value. Based on the key type, the plugin updates the event with the corresponding value(s):
+
+* For a `string`, the value is set directly at the destination field.
+* For a `hash`, each field in the hash becomes a nested field under the destination.
+* For a `list`, `set`, or `zset`, the destination field is set to an array of values.
+
+If the Redis key does not exist or an error occurs, the plugin can optionally populate the destination field with a fallback value.
 
 ## Documentation
 
