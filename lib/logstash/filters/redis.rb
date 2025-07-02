@@ -13,6 +13,7 @@ class LogStash::Filters::Redis < LogStash::Filters::Base
   config :destination, :validate => :string, :default => "redis"
   config :fallback, :validate => :string
   config :timeout, :validate => :number, :default => 5
+  config :append, :validate => :boolean, :default => false
 
   # Pattern matching options
   config :pattern_matching, :validate => :boolean, :default => false
@@ -30,7 +31,7 @@ class LogStash::Filters::Redis < LogStash::Filters::Base
   public
   def filter(event)
     return unless event.include?(@field)
-    return if event.include?(@destination) && !@override
+    return if event.include?(@destination) && !@override && !@append
 
     source_value = event.get(@field).is_a?(Array) ? 
                   event.get(@field).first.to_s : 
@@ -47,7 +48,13 @@ class LogStash::Filters::Redis < LogStash::Filters::Base
 
     rescue => e
       @logger.warn("Redis lookup failed", :error => e.message)
-      event.set(@destination, @fallback) if @fallback
+      if @fallback
+        if @append
+          append_value(event, @destination, @fallback)
+        else
+          event.set(@destination, @fallback)
+        end
+      end
     end
 
     filter_matched(event)
@@ -61,23 +68,23 @@ class LogStash::Filters::Redis < LogStash::Filters::Base
     case type
     when "string"
       value = @redis.get(source_value)
-      event.set(@destination, format_redis_value(value)) if value
+      set_or_append_value(event, @destination, format_redis_value(value)) if value
     when "hash"
       hash = @redis.hgetall(source_value)
       unless hash.empty?
-        event.set(@destination, format_redis_value(hash))
+        set_or_append_value(event, @destination, format_redis_value(hash))
       end
     when "list"
       list = @redis.lrange(source_value, 0, -1)
-      event.set(@destination, format_redis_value(list)) unless list.empty?
+      set_or_append_value(event, @destination, format_redis_value(list)) unless list.empty?
     when "set"
       set = @redis.smembers(source_value)
-      event.set(@destination, format_redis_value(set)) unless set.empty?
+      set_or_append_value(event, @destination, format_redis_value(set)) unless set.empty?
     when "zset"
       zset = @redis.zrange(source_value, 0, -1, with_scores: true)
-      event.set(@destination, format_redis_value(zset)) unless zset.empty?
+      set_or_append_value(event, @destination, format_redis_value(zset)) unless zset.empty?
     else
-      event.set(@destination, @fallback) if @fallback
+      set_or_append_value(event, @destination, @fallback) if @fallback
     end
   end
 
@@ -92,13 +99,33 @@ class LogStash::Filters::Redis < LogStash::Filters::Base
         redis_value = fetch_redis_value(pattern_key)
         formatted = format_redis_value(redis_value)
         formatted["matched_pattern"] = pattern
-        event.set(@destination, formatted)
+        set_or_append_value(event, @destination, formatted)
         matched = true
-        break
+        break unless @append
       end
     end
 
-    event.set(@destination, @fallback) if !matched && @fallback
+    set_or_append_value(event, @destination, @fallback) if !matched && @fallback
+  end
+
+  def set_or_append_value(event, field, value)
+    if @append
+      append_value(event, field, value)
+    else
+      event.set(field, value)
+    end
+  end
+
+  def append_value(event, field, value)
+    current = event.get(field)
+    if current.nil?
+      event.set(field, [value])
+    elsif current.is_a?(Array)
+      current << value
+      event.set(field, current)
+    else
+      event.set(field, [current, value])
+    end
   end
 
   def format_redis_value(value)
