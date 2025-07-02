@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0]
+### Added
+- Wildcard pattern matching support via `pattern_matching` configuration
+- Configurable pattern namespace with `pattern_namespace` setting
+- SCAN-based pattern lookup for better performance with large datasets
+- Regex pattern caching for improved matching efficiency
+- Support for matching event values against Redis-stored patterns
+- New output structure with matched pattern metadata
+- Support for appending multiple Redis values to an array with `append` configuration
+- JSON parsing for string values to handle structured data in Redis
+- Improved value formatting with type preservation
+- Better handling of array input values from the source field
+
 ## [0.4.0]
 ### Added
 - Support for Redis data types: `string`, `hash`, `list`, `set`, and `zset`.

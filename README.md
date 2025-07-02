@@ -6,13 +6,38 @@ It is fully free and open source under the Apache 2.0 License.
 
 ## 🔧 Features
 
-- Look up values from Redis based on a specified event field.
-- Supports Redis types: `string`, `hash`, `list`, `set`, and `zset`.
-- Optional fallback value if the key is not found or Redis is unreachable.
-- Configurable key source field, destination field, and override behavior.
+- Look up values from Redis based on a specified event field
+- Supports all Redis data types: `string`, `hash`, `list`, `set`, and `zset`
+- Optional fallback value if the key is not found or Redis is unreachable
+- Configurable key source field, destination field, and override behavior
+- Wildcard pattern matching against Redis-stored patterns
+- Efficient SCAN-based pattern lookup for large datasets
+- Regex pattern caching for improved performance
+- Array value support with `append` option
+- Automatic JSON parsing for string values
+- Configurable connection timeout and Redis database selection
 
-## 📄 Configuration Example
+## 📄 Configuration Options
 
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `host` | Redis host address | "127.0.0.1" |
+| `port` | Redis port | 6379 |
+| `password` | Redis password (optional) | nil |
+| `db` | Redis database number | 0 |
+| `field` | Event field to use as lookup key | (required) |
+| `destination` | Field where to store lookup results | "redis" |
+| `override` | Overwrite destination field if it exists | false |
+| `fallback` | Default value if lookup fails | nil |
+| `timeout` | Redis connection timeout in seconds | 5 |
+| `append` | Append results to an array instead of overwriting | false |
+| `pattern_matching` | Enable wildcard pattern matching | false |
+| `pattern_namespace` | Redis key namespace for patterns | "" |
+| `scan_count` | Number of items to scan per iteration | 1000 |
+
+## 🛠 Configuration Examples
+
+### Standard Lookup
 ```logstash
 filter {
   redis {
@@ -25,24 +50,65 @@ filter {
     fallback => "unknown"
   }
 }
-````
+```
+
+### Pattern Matching with Namespace
+```logstash
+filter {
+  redis {
+    field => "[source][ip]"
+    destination => "[threat][match]"
+    pattern_matching => true
+    pattern_namespace => "ip_patterns:"
+    scan_count => 2000
+  }
+}
+```
+
+### Appending Multiple Values
+```logstash
+filter {
+  redis {
+    field => "tags"
+    destination => "enriched_data"
+    append => true
+    fallback => {"default" => "value"}
+  }
+}
+```
 
 ## 🧠 How It Works
 
-Given an event field (e.g., `user_id`), the plugin queries Redis for a key matching the field’s value. Based on the key type, the plugin updates the event with the corresponding value(s):
+### Value Lookup Modes
+1. **Direct Lookup**: Uses the field value as a direct Redis key
+2. **Pattern Matching**: When enabled, scans Redis for pattern keys that match the field value
 
-* For a `string`, the value is set directly at the destination field.
-* For a `hash`, each field in the hash becomes a nested field under the destination.
-* For a `list`, `set`, or `zset`, the destination field is set to an array of values.
+### Data Type Handling
+- **Strings**: Stored directly or parsed as JSON if valid
+- **Hashes**: Converted to nested objects
+- **Lists/Sets**: Converted to arrays
+- **Sorted Sets**: Converted to arrays with scores
 
-If the Redis key does not exist or an error occurs, the plugin can optionally populate the destination field with a fallback value.
+### Pattern Matching Output
+When pattern matching finds a result, the output includes metadata:
+```json
+{
+  "matched_pattern": "192.168.*",
+  "value": "internal_network",
+  "original_value": "192.168.1.1"
+}
+```
 
-## Documentation
-
-Logstash provides infrastructure to automatically generate documentation for this plugin. We use the asciidoc format to write documentation so any comments in the source code will be first converted into asciidoc and then into html. All plugin documentation are placed under one [central location](http://www.elastic.co/guide/en/logstash/current/).
-
-- For formatting code or config example, you can use the asciidoc `[source,ruby]` directive
-- For more asciidoc formatting tips, see the excellent reference here https://github.com/elastic/docs#asciidoc-guide
+### Array Handling with `append`
+When `append` is true, multiple matches will be collected in an array:
+```json
+{
+  "enriched_data": [
+    {"matched_pattern": "192.168.*", "value": "internal"},
+    {"matched_pattern": "192.*", "value": "private"}
+  ]
+}
+```
 
 ## Need Help?
 
