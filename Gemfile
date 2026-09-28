@@ -1,7 +1,13 @@
 source 'https://rubygems.org'
 
-platforms :jruby do
-  gem 'logstash-core-plugin-api', '>= 1.60', '< 2.99'
-  gem 'logstash-devutils', '>= 2.6', '< 2.7'
-  gemspec 
+gemspec
+
+# Run the rspec suite against a Logstash source checkout:
+#   LOGSTASH_SOURCE=1 LOGSTASH_PATH=/path/to/logstash bundle install
+logstash_path = ENV["LOGSTASH_PATH"] || "../../logstash"
+use_logstash_source = ENV["LOGSTASH_SOURCE"].to_s == "1"
+
+if Dir.exist?(logstash_path) && use_logstash_source
+  gem 'logstash-core', :path => "#{logstash_path}/logstash-core"
+  gem 'logstash-core-plugin-api', :path => "#{logstash_path}/logstash-core-plugin-api"
 end

@@ -1,195 +1,238 @@
-# Logstash Filter Plugin: Redis Lookup
+# logstash-filter-redis
 
-This is a custom [Logstash](https://github.com/elastic/logstash) filter plugin that enriches event data by querying a Redis datastore. The plugin retrieves values from Redis using a field in the event as the lookup key and supports various Redis data types (`string`, `hash`, `list`, `set`, `zset`).
+A [Logstash](https://github.com/elastic/logstash) filter plugin that enriches
+events with values looked up in Redis or Valkey. The value of an event field is
+used as the key, or matched against wildcard patterns stored as keys.
 
-It is fully free and open source under the Apache 2.0 License.
+Licensed under the Apache 2.0 License.
 
-## 🔧 Features
+## Features
 
-- Look up values from Redis based on a specified event field
-- Supports all Redis data types: `string`, `hash`, `list`, `set`, and `zset`
-- Optional fallback value if the key is not found or Redis is unreachable
-- Configurable key source field, destination field, and override behavior
-- Wildcard pattern matching against Redis-stored patterns
-- Efficient SCAN-based pattern lookup for large datasets
-- Regex pattern caching for improved performance
-- Array value support with `append` option
-- Automatic JSON parsing for string values
-- Configurable connection timeout and Redis database selection
+- Looks up `string`, `hash`, `list`, `set` and `zset` values; JSON strings are
+  parsed into objects.
+- Wildcard pattern matching against pattern keys (`*curl*`, `Mozilla*`), with
+  an optional key prefix.
+- Fallback value when a key is missing or Redis is unreachable.
+- Override or append to the destination field.
+- **Batch-level lookups**: the keys of a whole pipeline batch are
+  de-duplicated and fetched with pipelined commands, so a batch costs one or
+  two network round trips instead of one or two per event.
+- **One connection per pipeline worker**: workers don't wait on each other.
+- **Optional local cache**, including caching of misses.
 
-## 📄 Configuration Options
+## Installation
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| `host` | Redis host address | "127.0.0.1" |
-| `port` | Redis port | 6379 |
-| `password` | Redis password (optional) | nil |
-| `db` | Redis database number | 0 |
-| `field` | Event field to use as lookup key | (required) |
-| `destination` | Field where to store lookup results | "redis" |
-| `override` | Overwrite destination field if it exists | false |
-| `fallback` | Default value if lookup fails | nil |
-| `timeout` | Redis connection timeout in seconds | 5 |
-| `append` | Append results to an array instead of overwriting | false |
-| `pattern_matching` | Enable wildcard pattern matching | false |
-| `pattern_namespace` | Redis key namespace for patterns | "" |
-| `scan_count` | Number of items to scan per iteration | 1000 |
-
-## 🛠 Configuration Examples
-
-### Standard Lookup
-```logstash
-filter {
-  redis {
-    host => "localhost"
-    port => 6379
-    db => 0
-    field => "user_id"
-    destination => "user_data"
-    override => true
-    fallback => "unknown"
-  }
-}
+```sh
+bin/logstash-plugin install logstash-filter-redis
+# or, from a built gem file:
+bin/logstash-plugin install --no-verify /path/to/logstash-filter-redis-0.6.0.gem
 ```
 
-### Pattern Matching with Namespace
+### Upgrading from 0.5.x
+
+0.6.0 is a drop-in upgrade: existing configurations keep working without any
+change and produce the same events. The standalone test suite checks this
+against the output of 0.5.1 for a matrix of configurations. Batching and
+per-worker connections apply automatically; caching and `data_type` are
+opt-in. See [CHANGELOG.md](CHANGELOG.md) for the full list of changes.
+
+## Configuration options
+
+| Setting | Type | Default | Description |
+|---|---|---|---|
+| `host` | string | `"127.0.0.1"` | Redis host. |
+| `port` | number | `6379` | Redis port. |
+| `password` | password | — | Redis password. |
+| `db` | number | `0` | Redis database number. |
+| `timeout` | number | `5` | Connection and command timeout, in seconds. |
+| `field` | string | *(required)* | Event field holding the key (the first element is used when it is an array). |
+| `destination` | string | `"redis"` | Field receiving the result. |
+| `override` | boolean | `false` | Overwrite `destination` when it already exists (otherwise the event is skipped). |
+| `append` | boolean | `false` | Append results to `destination` as an array. With `pattern_matching`, keeps every matching pattern instead of the first. |
+| `fallback` | string | — | Value set when the key is missing, nothing matches, or the lookup fails. |
+| `data_type` | string | `"auto"` | `auto` asks Redis for each key's type first. `string`, `hash`, `list`, `set` or `zset` skip that round trip; a key of another type then fails the batch's lookups (those events get the fallback), so only use it when all keys share that type. |
+| `cache_ttl` | number | `0` | Seconds a found value stays in the local cache. `0` disables caching of found values. |
+| `cache_miss_ttl` | number | `cache_ttl` | Seconds a miss stays in the local cache. |
+| `cache_size` | number | `10000` | Maximum number of cached keys per filter instance; the oldest entries are evicted first. |
+| `pattern_matching` | boolean | `false` | Match the field value against pattern keys instead of using it as a key. |
+| `pattern_namespace` | string | `""` | Key prefix of the pattern keys (e.g. `"ua:"`). |
+| `scan_count` | number | `1000` | `COUNT` hint for the `SCAN` that loads the pattern keys. |
+| `pattern_cache_refresh_interval` | number | `60` | Seconds between two reloads of the pattern keys. |
+
+The cache is disabled unless `cache_ttl` or `cache_miss_ttl` is greater than 0.
+
+## Examples
+
+### Direct lookup
+
 ```logstash
 filter {
   redis {
+    host => "valkey.example.org"
     field => "[source][ip]"
-    destination => "[threat][match]"
-    pattern_matching => true
-    pattern_namespace => "ip_patterns:"
-    scan_count => 2000
+    destination => "[threat][source]"
+    fallback => "none"
   }
 }
 ```
 
-### Appending Multiple Values
+### Threat-intelligence enrichment with caching
+
+Most lookups of threat indicators miss. Caching misses removes most of the
+Redis traffic, at the cost of freshness: a newly added indicator is only seen
+once the cached miss expires.
+
 ```logstash
 filter {
   redis {
-    field => "tags"
-    destination => "enriched_data"
-    append => true
-    fallback => {"default" => "value"}
+    host => "valkey.example.org"
+    field => "[source][ip]"
+    destination => "[threat][source]"
+    data_type => "hash"      # every indicator is stored as a hash
+    cache_ttl => 300         # found values: 5 minutes
+    cache_miss_ttl => 60     # misses: new indicators seen within a minute
+    cache_size => 20000
   }
 }
 ```
 
-## 🧠 How It Works
+### Pattern matching
 
-### Value Lookup Modes
-1. **Direct Lookup**: Uses the field value as a direct Redis key
-2. **Pattern Matching**: When enabled, scans Redis for pattern keys that match the field value
+With pattern keys such as `ua:*curl*` or `ua:Mozilla*` in database 1:
 
-### Data Type Handling
-- **Strings**: Stored directly or parsed as JSON if valid
-- **Hashes**: Converted to nested objects
-- **Lists/Sets**: Converted to arrays
-- **Sorted Sets**: Converted to arrays with scores
-
-### Pattern Matching Output
-When pattern matching finds a result, the output includes metadata:
-```json
-{
-  "matched_pattern": "192.168.*",
-  "value": "internal_network",
-  "original_value": "192.168.1.1"
+```logstash
+filter {
+  redis {
+    db => 1
+    field => "[user_agent][original]"
+    destination => "[threat][user_agent]"
+    pattern_matching => true
+    pattern_namespace => "ua:"
+  }
 }
 ```
 
-### Array Handling with `append`
-When `append` is true, multiple matches will be collected in an array:
+`*` matches any sequence of characters; matching is case-insensitive and
+anchored at both ends. Without `append`, the first matching pattern wins, in
+the order Redis returns the keys. That order is arbitrary, so avoid
+overlapping patterns or use `append`.
+
+## Output format
+
+| Redis value | Result in `destination` |
+|---|---|
+| string | Parsed JSON value when the string is JSON (`{"feed":"x"}` → object, `"123"` → `123`), otherwise `{"value": "<string>"}` |
+| hash | Object; each field value parsed as JSON when possible |
+| list, set | Array; each element parsed as JSON when possible |
+| zset | Array of `[member, score]` pairs |
+
+In pattern mode the result is an object carrying the matched pattern; non-object
+values are wrapped in `value`:
+
 ```json
-{
-  "enriched_data": [
-    {"matched_pattern": "192.168.*", "value": "internal"},
-    {"matched_pattern": "192.*", "value": "private"}
-  ]
-}
+{ "tool": "curl", "matched_pattern": "*curl*" }
 ```
 
-## Need Help?
+With `append`, results are collected in an array, next to any existing value of
+`destination`:
 
-Need help? Try #logstash on freenode IRC or the https://discuss.elastic.co/c/logstash discussion forum.
+```json
+[
+  { "kind": "bot", "matched_pattern": "*bot*" },
+  { "ua": "moz", "matched_pattern": "Mozilla*" }
+]
+```
 
-## Developing
+## How lookups work
 
-### 1. Plugin Developement and Testing
+- **Batching.** Logstash hands the filter the events of a batch that reach it.
+  Their keys are de-duplicated and resolved with pipelined commands: in `auto`
+  mode, one round trip for the types and one for the values; with an explicit
+  `data_type`, a single round trip. `pipeline.batch.size` therefore sets how
+  many keys go into each round trip.
+- **Connections.** Each pipeline worker thread lazily opens its own connection.
+  After a failed lookup, the worker's connection is dropped and re-opened on
+  the next batch. All connections are closed when the pipeline stops or
+  reloads.
+- **Cache.** Each `redis {}` block has its own cache of up to `cache_size`
+  keys, shared by the pipeline's workers. Budget heap accordingly when you use
+  large caches in many filters.
+- **Pattern keys** are loaded with `SCAN` on first use and reloaded every
+  `pattern_cache_refresh_interval` seconds by a single worker, while the others
+  keep matching against the previous list. If a reload fails, the previous
+  list is kept.
 
-#### Code
-- To get started, you'll need JRuby with the Bundler gem installed.
+### Metrics
 
-- Create a new plugin or clone and existing from the GitHub [logstash-plugins](https://github.com/logstash-plugins) organization. We also provide [example plugins](https://github.com/logstash-plugins?query=example).
+Each filter increments two counters in its plugin metrics: `cache_hits`
+(keys served from the local cache) and `redis_lookups` (keys sent to Redis).
+Their ratio shows how effective the cache is.
 
-- Install dependencies
+## Testing
+
+### Standalone suite (no Logstash needed)
+
+Runs the filter on MRI Ruby, with a minimal stand-in for the Logstash classes,
+against a throwaway Redis/Valkey server that the script starts and stops. It
+covers lookups, batching (checked through Redis `commandstats`), caching,
+pattern matching, concurrency, failures, and output compatibility with 0.5.1.
+
 ```sh
+sudo apt-get install -y redis-server   # or valkey-server
+test/standalone/run.sh                 # installs the redis gem 4.x if missing
+test/standalone/run.sh -n /cache/      # only the tests matching /cache/
+```
+
+The server listens on port 6390 (`REDIS_TEST_PORT` to change it) and is wiped
+by the suite; the script refuses to reuse a port that is already in use.
+
+`test/standalone/fixtures/compat_0.5.1.json` holds the events produced by
+0.5.1. To re-record it from another version of the filter, see
+`test/standalone/record_compat_fixture.rb`.
+
+### End-to-end in Logstash
+
+Builds the gem, installs it into Logstash OSS (downloaded once into `.cache/`),
+starts a throwaway Redis, runs `test/logstash/events.jsonl` through a
+0.5.x-style configuration and through one using the cache options, and checks
+the enriched events.
+
+```sh
+test/logstash/run.sh                        # Logstash OSS 9.5.4
+LS_VERSION=<version> test/logstash/run.sh   # another Logstash version
+LS_HOME=/opt/logstash test/logstash/run.sh  # an existing install (the plugin gets installed into it)
+```
+
+### GitHub Codespaces
+
+The repository ships a devcontainer (Ruby 3.3, redis-server, redis gem). Open
+a Codespace, then run either test script above. The end-to-end test needs
+about 4 GB of memory for Logstash.
+
+### Logstash plugin test framework (rspec)
+
+`spec/` uses the standard Logstash plugin test framework, which needs JRuby,
+a Logstash source checkout and a Redis on `127.0.0.1:6379`:
+
+```sh
+export LOGSTASH_SOURCE=1 LOGSTASH_PATH=/path/to/logstash
 bundle install
-```
-
-#### Test
-
-- Update your dependencies
-
-```sh
-bundle install
-```
-
-- Run tests
-
-```sh
 bundle exec rspec
 ```
 
-### 2. Running your unpublished Plugin in Logstash
+### Continuous integration
 
-#### 2.1 Run in a local Logstash clone
+`.github/workflows/test.yml` runs the standalone suite and builds the gem on
+every push and pull request. The end-to-end job runs on tags and on manual
+dispatch.
 
-- Edit Logstash `Gemfile` and add the local plugin path, for example:
-```ruby
-gem "logstash-filter-awesome", :path => "/your/local/logstash-filter-awesome"
-```
-- Install plugin
+## Building
+
 ```sh
-# Logstash 2.3 and higher
-bin/logstash-plugin install --no-verify
-
-# Prior to Logstash 2.3
-bin/plugin install --no-verify
-
+gem build logstash-filter-redis.gemspec
 ```
-- Run Logstash with your plugin
-```sh
-bin/logstash -e 'filter {awesome {}}'
-```
-At this point any modifications to the plugin code will be applied to this local Logstash setup. After modifying the plugin, simply rerun Logstash.
-
-#### 2.2 Run in an installed Logstash
-
-You can use the same **2.1** method to run your plugin in an installed Logstash by editing its `Gemfile` and pointing the `:path` to your local plugin development directory or you can build the gem and install it using:
-
-- Build your plugin gem
-```sh
-gem build logstash-filter-awesome.gemspec
-```
-- Install the plugin from the Logstash home
-```sh
-# Logstash 2.3 and higher
-bin/logstash-plugin install --no-verify
-
-# Prior to Logstash 2.3
-bin/plugin install --no-verify
-
-```
-- Start Logstash and proceed to test the plugin
 
 ## Contributing
 
-All contributions are welcome: ideas, patches, documentation, bug reports, complaints, and even something you drew up on a napkin.
-
-Programming is not a required skill. Whatever you've seen about open source and maintainers or community members  saying "send patches or die" - you will not see that here.
-
-It is more important to the community that you are able to contribute.
-
-For more information about contributing, see the [CONTRIBUTING](https://github.com/elastic/logstash/blob/master/CONTRIBUTING.md) file.
+Issues and pull requests are welcome at
+https://github.com/Psych0meter/logstash-filter-redis.

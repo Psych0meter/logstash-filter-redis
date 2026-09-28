@@ -1,0 +1,1264 @@
+[
+  [
+    {
+      "field": "k",
+      "destination": "t"
+    },
+    [
+      {
+        "k": "str",
+        "t": {
+          "value": "plain"
+        },
+        "@matched": true
+      },
+      {
+        "k": "json",
+        "t": {
+          "feed": "x",
+          "n": 1
+        },
+        "@matched": true
+      },
+      {
+        "k": "num",
+        "t": 123,
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": {
+          "a": 1,
+          "b": {
+            "c": 2
+          },
+          "c": "text"
+        },
+        "@matched": true
+      },
+      {
+        "k": "list",
+        "t": [
+          "l1",
+          {
+            "j": 1
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "set",
+        "t": [
+          "s1"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "zset",
+        "t": [
+          [
+            "z1",
+            1.0
+          ],
+          [
+            "z2",
+            2.0
+          ]
+        ],
+        "@matched": true
+      },
+      {
+        "k": "missing",
+        "@matched": true
+      },
+      {
+        "k": "empty",
+        "t": {
+          "value": ""
+        },
+        "@matched": true
+      },
+      {
+        "k": "curl/7",
+        "@matched": true
+      },
+      {
+        "k": "Mozilla/5",
+        "@matched": true
+      },
+      {
+        "k": "googlebot",
+        "@matched": true
+      },
+      {
+        "k": "x",
+        "@matched": true
+      },
+      {
+        "k": [
+          "hash",
+          "str"
+        ],
+        "t": {
+          "a": 1,
+          "b": {
+            "c": 2
+          },
+          "c": "text"
+        },
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": "pre"
+      },
+      {
+        "k": "str",
+        "t": [
+          "p1"
+        ]
+      },
+      {
+        "a": {
+          "b": "hash"
+        }
+      },
+      {
+        "other": 1
+      }
+    ]
+  ],
+  [
+    {
+      "field": "k",
+      "destination": "t",
+      "fallback": "none"
+    },
+    [
+      {
+        "k": "str",
+        "t": {
+          "value": "plain"
+        },
+        "@matched": true
+      },
+      {
+        "k": "json",
+        "t": {
+          "feed": "x",
+          "n": 1
+        },
+        "@matched": true
+      },
+      {
+        "k": "num",
+        "t": 123,
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": {
+          "a": 1,
+          "b": {
+            "c": 2
+          },
+          "c": "text"
+        },
+        "@matched": true
+      },
+      {
+        "k": "list",
+        "t": [
+          "l1",
+          {
+            "j": 1
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "set",
+        "t": [
+          "s1"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "zset",
+        "t": [
+          [
+            "z1",
+            1.0
+          ],
+          [
+            "z2",
+            2.0
+          ]
+        ],
+        "@matched": true
+      },
+      {
+        "k": "missing",
+        "t": "none",
+        "@matched": true
+      },
+      {
+        "k": "empty",
+        "t": {
+          "value": ""
+        },
+        "@matched": true
+      },
+      {
+        "k": "curl/7",
+        "t": "none",
+        "@matched": true
+      },
+      {
+        "k": "Mozilla/5",
+        "t": "none",
+        "@matched": true
+      },
+      {
+        "k": "googlebot",
+        "t": "none",
+        "@matched": true
+      },
+      {
+        "k": "x",
+        "t": "none",
+        "@matched": true
+      },
+      {
+        "k": [
+          "hash",
+          "str"
+        ],
+        "t": {
+          "a": 1,
+          "b": {
+            "c": 2
+          },
+          "c": "text"
+        },
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": "pre"
+      },
+      {
+        "k": "str",
+        "t": [
+          "p1"
+        ]
+      },
+      {
+        "a": {
+          "b": "hash"
+        }
+      },
+      {
+        "other": 1
+      }
+    ]
+  ],
+  [
+    {
+      "field": "k",
+      "destination": "t",
+      "override": true
+    },
+    [
+      {
+        "k": "str",
+        "t": {
+          "value": "plain"
+        },
+        "@matched": true
+      },
+      {
+        "k": "json",
+        "t": {
+          "feed": "x",
+          "n": 1
+        },
+        "@matched": true
+      },
+      {
+        "k": "num",
+        "t": 123,
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": {
+          "a": 1,
+          "b": {
+            "c": 2
+          },
+          "c": "text"
+        },
+        "@matched": true
+      },
+      {
+        "k": "list",
+        "t": [
+          "l1",
+          {
+            "j": 1
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "set",
+        "t": [
+          "s1"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "zset",
+        "t": [
+          [
+            "z1",
+            1.0
+          ],
+          [
+            "z2",
+            2.0
+          ]
+        ],
+        "@matched": true
+      },
+      {
+        "k": "missing",
+        "@matched": true
+      },
+      {
+        "k": "empty",
+        "t": {
+          "value": ""
+        },
+        "@matched": true
+      },
+      {
+        "k": "curl/7",
+        "@matched": true
+      },
+      {
+        "k": "Mozilla/5",
+        "@matched": true
+      },
+      {
+        "k": "googlebot",
+        "@matched": true
+      },
+      {
+        "k": "x",
+        "@matched": true
+      },
+      {
+        "k": [
+          "hash",
+          "str"
+        ],
+        "t": {
+          "a": 1,
+          "b": {
+            "c": 2
+          },
+          "c": "text"
+        },
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": {
+          "a": 1,
+          "b": {
+            "c": 2
+          },
+          "c": "text"
+        },
+        "@matched": true
+      },
+      {
+        "k": "str",
+        "t": {
+          "value": "plain"
+        },
+        "@matched": true
+      },
+      {
+        "a": {
+          "b": "hash"
+        }
+      },
+      {
+        "other": 1
+      }
+    ]
+  ],
+  [
+    {
+      "field": "k",
+      "destination": "t",
+      "append": true
+    },
+    [
+      {
+        "k": "str",
+        "t": [
+          {
+            "value": "plain"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "json",
+        "t": [
+          {
+            "feed": "x",
+            "n": 1
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "num",
+        "t": [
+          123
+        ],
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": [
+          {
+            "a": 1,
+            "b": {
+              "c": 2
+            },
+            "c": "text"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "list",
+        "t": [
+          [
+            "l1",
+            {
+              "j": 1
+            }
+          ]
+        ],
+        "@matched": true
+      },
+      {
+        "k": "set",
+        "t": [
+          [
+            "s1"
+          ]
+        ],
+        "@matched": true
+      },
+      {
+        "k": "zset",
+        "t": [
+          [
+            [
+              "z1",
+              1.0
+            ],
+            [
+              "z2",
+              2.0
+            ]
+          ]
+        ],
+        "@matched": true
+      },
+      {
+        "k": "missing",
+        "@matched": true
+      },
+      {
+        "k": "empty",
+        "t": [
+          {
+            "value": ""
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "curl/7",
+        "@matched": true
+      },
+      {
+        "k": "Mozilla/5",
+        "@matched": true
+      },
+      {
+        "k": "googlebot",
+        "@matched": true
+      },
+      {
+        "k": "x",
+        "@matched": true
+      },
+      {
+        "k": [
+          "hash",
+          "str"
+        ],
+        "t": [
+          {
+            "a": 1,
+            "b": {
+              "c": 2
+            },
+            "c": "text"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": [
+          "pre",
+          {
+            "a": 1,
+            "b": {
+              "c": 2
+            },
+            "c": "text"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "str",
+        "t": [
+          "p1",
+          {
+            "value": "plain"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "a": {
+          "b": "hash"
+        }
+      },
+      {
+        "other": 1
+      }
+    ]
+  ],
+  [
+    {
+      "field": "k",
+      "destination": "t",
+      "append": true,
+      "fallback": "fb"
+    },
+    [
+      {
+        "k": "str",
+        "t": [
+          {
+            "value": "plain"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "json",
+        "t": [
+          {
+            "feed": "x",
+            "n": 1
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "num",
+        "t": [
+          123
+        ],
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": [
+          {
+            "a": 1,
+            "b": {
+              "c": 2
+            },
+            "c": "text"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "list",
+        "t": [
+          [
+            "l1",
+            {
+              "j": 1
+            }
+          ]
+        ],
+        "@matched": true
+      },
+      {
+        "k": "set",
+        "t": [
+          [
+            "s1"
+          ]
+        ],
+        "@matched": true
+      },
+      {
+        "k": "zset",
+        "t": [
+          [
+            [
+              "z1",
+              1.0
+            ],
+            [
+              "z2",
+              2.0
+            ]
+          ]
+        ],
+        "@matched": true
+      },
+      {
+        "k": "missing",
+        "t": [
+          "fb"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "empty",
+        "t": [
+          {
+            "value": ""
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "curl/7",
+        "t": [
+          "fb"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "Mozilla/5",
+        "t": [
+          "fb"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "googlebot",
+        "t": [
+          "fb"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "x",
+        "t": [
+          "fb"
+        ],
+        "@matched": true
+      },
+      {
+        "k": [
+          "hash",
+          "str"
+        ],
+        "t": [
+          {
+            "a": 1,
+            "b": {
+              "c": 2
+            },
+            "c": "text"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": [
+          "pre",
+          {
+            "a": 1,
+            "b": {
+              "c": 2
+            },
+            "c": "text"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "str",
+        "t": [
+          "p1",
+          {
+            "value": "plain"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "a": {
+          "b": "hash"
+        }
+      },
+      {
+        "other": 1
+      }
+    ]
+  ],
+  [
+    {
+      "field": "[a][b]",
+      "destination": "[x][y]"
+    },
+    [
+      {
+        "k": "str"
+      },
+      {
+        "k": "json"
+      },
+      {
+        "k": "num"
+      },
+      {
+        "k": "hash"
+      },
+      {
+        "k": "list"
+      },
+      {
+        "k": "set"
+      },
+      {
+        "k": "zset"
+      },
+      {
+        "k": "missing"
+      },
+      {
+        "k": "empty"
+      },
+      {
+        "k": "curl/7"
+      },
+      {
+        "k": "Mozilla/5"
+      },
+      {
+        "k": "googlebot"
+      },
+      {
+        "k": "x"
+      },
+      {
+        "k": [
+          "hash",
+          "str"
+        ]
+      },
+      {
+        "k": "hash",
+        "t": "pre"
+      },
+      {
+        "k": "str",
+        "t": [
+          "p1"
+        ]
+      },
+      {
+        "a": {
+          "b": "hash"
+        },
+        "x": {
+          "y": {
+            "a": 1,
+            "b": {
+              "c": 2
+            },
+            "c": "text"
+          }
+        },
+        "@matched": true
+      },
+      {
+        "other": 1
+      }
+    ]
+  ],
+  [
+    {
+      "field": "k",
+      "destination": "t",
+      "db": 1,
+      "pattern_matching": true
+    },
+    [
+      {
+        "k": "str",
+        "@matched": true
+      },
+      {
+        "k": "json",
+        "@matched": true
+      },
+      {
+        "k": "num",
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "@matched": true
+      },
+      {
+        "k": "list",
+        "@matched": true
+      },
+      {
+        "k": "set",
+        "@matched": true
+      },
+      {
+        "k": "zset",
+        "@matched": true
+      },
+      {
+        "k": "missing",
+        "@matched": true
+      },
+      {
+        "k": "empty",
+        "@matched": true
+      },
+      {
+        "k": "curl/7",
+        "t": {
+          "tool": "curl",
+          "matched_pattern": "*curl*"
+        },
+        "@matched": true
+      },
+      {
+        "k": "Mozilla/5",
+        "t": {
+          "ua": "moz",
+          "matched_pattern": "Mozilla*"
+        },
+        "@matched": true
+      },
+      {
+        "k": "googlebot",
+        "t": {
+          "kind": "bot",
+          "matched_pattern": "*bot*"
+        },
+        "@matched": true
+      },
+      {
+        "k": "x",
+        "@matched": true
+      },
+      {
+        "k": [
+          "hash",
+          "str"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": "pre"
+      },
+      {
+        "k": "str",
+        "t": [
+          "p1"
+        ]
+      },
+      {
+        "a": {
+          "b": "hash"
+        }
+      },
+      {
+        "other": 1
+      }
+    ]
+  ],
+  [
+    {
+      "field": "k",
+      "destination": "t",
+      "db": 1,
+      "pattern_matching": true,
+      "append": true,
+      "fallback": "nomatch"
+    },
+    [
+      {
+        "k": "str",
+        "t": [
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "json",
+        "t": [
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "num",
+        "t": [
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": [
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "list",
+        "t": [
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "set",
+        "t": [
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "zset",
+        "t": [
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "missing",
+        "t": [
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "empty",
+        "t": [
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "curl/7",
+        "t": [
+          {
+            "tool": "curl",
+            "matched_pattern": "*curl*"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "Mozilla/5",
+        "t": [
+          {
+            "ua": "moz",
+            "matched_pattern": "Mozilla*"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "googlebot",
+        "t": [
+          {
+            "kind": "bot",
+            "matched_pattern": "*bot*"
+          }
+        ],
+        "@matched": true
+      },
+      {
+        "k": "x",
+        "t": [
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "k": [
+          "hash",
+          "str"
+        ],
+        "t": [
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": [
+          "pre",
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "str",
+        "t": [
+          "p1",
+          "nomatch"
+        ],
+        "@matched": true
+      },
+      {
+        "a": {
+          "b": "hash"
+        }
+      },
+      {
+        "other": 1
+      }
+    ]
+  ],
+  [
+    {
+      "field": "k",
+      "destination": "t",
+      "db": 2,
+      "pattern_matching": true,
+      "pattern_namespace": "ua:"
+    },
+    [
+      {
+        "k": "str",
+        "@matched": true
+      },
+      {
+        "k": "json",
+        "@matched": true
+      },
+      {
+        "k": "num",
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "@matched": true
+      },
+      {
+        "k": "list",
+        "@matched": true
+      },
+      {
+        "k": "set",
+        "@matched": true
+      },
+      {
+        "k": "zset",
+        "@matched": true
+      },
+      {
+        "k": "missing",
+        "@matched": true
+      },
+      {
+        "k": "empty",
+        "@matched": true
+      },
+      {
+        "k": "curl/7",
+        "t": {
+          "tool": "curl2",
+          "matched_pattern": "*curl*"
+        },
+        "@matched": true
+      },
+      {
+        "k": "Mozilla/5",
+        "@matched": true
+      },
+      {
+        "k": "googlebot",
+        "@matched": true
+      },
+      {
+        "k": "x",
+        "@matched": true
+      },
+      {
+        "k": [
+          "hash",
+          "str"
+        ],
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": "pre"
+      },
+      {
+        "k": "str",
+        "t": [
+          "p1"
+        ]
+      },
+      {
+        "a": {
+          "b": "hash"
+        }
+      },
+      {
+        "other": 1
+      }
+    ]
+  ],
+  [
+    {
+      "field": "k",
+      "destination": "t",
+      "fallback": "down",
+      "port": 1,
+      "timeout": 1
+    },
+    [
+      {
+        "k": "str",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "json",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "num",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "list",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "set",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "zset",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "missing",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "empty",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "curl/7",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "Mozilla/5",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "googlebot",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "x",
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": [
+          "hash",
+          "str"
+        ],
+        "t": "down",
+        "@matched": true
+      },
+      {
+        "k": "hash",
+        "t": "pre"
+      },
+      {
+        "k": "str",
+        "t": [
+          "p1"
+        ]
+      },
+      {
+        "a": {
+          "b": "hash"
+        }
+      },
+      {
+        "other": 1
+      }
+    ]
+  ]
+]

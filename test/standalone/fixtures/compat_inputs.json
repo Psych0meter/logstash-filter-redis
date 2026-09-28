@@ -1,0 +1,7 @@
+[
+  {"k": "str"}, {"k": "json"}, {"k": "num"}, {"k": "hash"}, {"k": "list"},
+  {"k": "set"}, {"k": "zset"}, {"k": "missing"}, {"k": "empty"},
+  {"k": "curl/7"}, {"k": "Mozilla/5"}, {"k": "googlebot"}, {"k": "x"},
+  {"k": ["hash", "str"]}, {"k": "hash", "t": "pre"}, {"k": "str", "t": ["p1"]},
+  {"a": {"b": "hash"}}, {"other": 1}
+]
