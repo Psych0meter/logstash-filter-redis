@@ -1,0 +1,89 @@
+name: release
+
+# Push a version tag (e.g. `git tag 0.6.1 && git push origin 0.6.1`) and this
+# workflow tests the tagged code, builds the gem and publishes it on the GitHub
+# release of that tag, with the CHANGELOG section as release notes.
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: Tag must match the gemspec version
+        run: |
+          version="$(ruby -e 'puts Gem::Specification.load("logstash-filter-redis.gemspec").version')"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match gemspec version $version"
+            exit 1
+          fi
+      - name: CHANGELOG must have an entry for the tag
+        run: |
+          grep -qF "## [$GITHUB_REF_NAME]" CHANGELOG.md \
+            || { echo "::error::no '## [$GITHUB_REF_NAME]' section in CHANGELOG.md"; exit 1; }
+
+  standalone:
+    needs: check-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: Install Redis and the redis gem
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends redis-server
+          gem install --no-document redis -v '~> 4.8'
+      - run: test/standalone/run.sh
+
+  logstash:
+    needs: check-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: Install Redis
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends redis-server
+      - run: test/logstash/run.sh
+
+  publish:
+    needs: [standalone, logstash]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: Build gem
+        run: |
+          gem build logstash-filter-redis.gemspec
+          sha256sum "logstash-filter-redis-$TAG.gem" > "logstash-filter-redis-$TAG.gem.sha256"
+      - name: Release notes from CHANGELOG
+        run: |
+          awk -v v="$TAG" 'index($0, "## [" v "]") == 1 {f=1; next} f && /^## \[/ {exit} f' \
+            CHANGELOG.md > release-notes.md
+      - name: Create the release, or add the files to an existing one
+        run: |
+          files=("logstash-filter-redis-$TAG.gem" "logstash-filter-redis-$TAG.gem.sha256")
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "${files[@]}" --clobber
+          else
+            gh release create "$TAG" "${files[@]}" --verify-tag \
+              --title "$TAG" --notes-file release-notes.md
+          fi
