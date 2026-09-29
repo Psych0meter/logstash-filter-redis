@@ -1,0 +1,40 @@
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  standalone:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: Install Redis and the redis gem
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends redis-server
+          gem install --no-document redis -v '~> 4.8'
+      - name: Standalone suite
+        run: test/standalone/run.sh
+      - name: Build gem
+        run: gem build logstash-filter-redis.gemspec
+
+  logstash:
+    # Downloads Logstash OSS (~400 MB): run manually or on release tags.
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: Install Redis
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends redis-server
+      - name: End-to-end test in Logstash
+        run: test/logstash/run.sh

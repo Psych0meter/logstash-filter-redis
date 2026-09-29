@@ -1,10 +1,13 @@
 Gem::Specification.new do |s|
 
   s.name = 'logstash-filter-redis'
-  s.version = '0.5.1'
+  s.version = '0.6.0'
   s.licenses = ['Apache-2.0']
-  s.summary = "Logstash filter plugin for enriching events with values from Redis."
-  s.description = "This plugin allows Logstash to enrich event data by looking up values from Redis using a specified field as a key. It supports Redis types including string, hash, list, set, and zset. Install using: $LS_HOME/bin/logstash-plugin install logstash-filter-redis."
+  s.summary = "Logstash filter plugin enriching events with values looked up in Redis or Valkey."
+  s.description = "Enriches events with values from Redis/Valkey, using an event field as the key or " \
+                  "matching it against wildcard patterns. Supports string, hash, list, set and zset " \
+                  "values, batch-level pipelined lookups, per-thread connections and an optional " \
+                  "local cache. Install with: $LS_HOME/bin/logstash-plugin install logstash-filter-redis."
 
   s.authors = ["meulop", "make", "Psych0meter"]
   s.email = 'psychometer@chpavaldon.com'
@@ -12,7 +15,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   # Files
-  s.files = Dir['lib/**/*','spec/**/*','vendor/**/*','*.gemspec','*.md','CONTRIBUTORS','Gemfile','LICENSE','NOTICE.TXT']
+  s.files = Dir['lib/**/*', 'spec/**/*', '*.gemspec', '*.md', 'CONTRIBUTORS', 'Gemfile', 'LICENSE', 'NOTICE.TXT']
 
   # Tests
   s.test_files = s.files.grep(%r{^(test|spec|features)/})
