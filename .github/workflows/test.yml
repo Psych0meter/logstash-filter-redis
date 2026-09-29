@@ -24,8 +24,7 @@ jobs:
         run: gem build logstash-filter-redis.gemspec
 
   logstash:
-    # Downloads Logstash OSS (~400 MB): run manually or on release tags.
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
